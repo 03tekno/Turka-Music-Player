@@ -2,7 +2,7 @@
 
 A simple and lightweight music player application built with Python and Qt6.
 
-Download link for the .deb file (Debian-based systems): https://github.com/03tekno/TurkaMP/releases/tag/current
+Download link for the .deb file (Debian-based systems): https://github.com/03tekno/Turka-Music-Player/releases/tag/current
 
 Turka Music Player: Feel the Music, Start the Visual Feast! 🎶
 
