@@ -1,4 +1,4 @@
-# Turka Music Player
+# Turka Music Player (ENG)
 
 A simple and lightweight music player application built with Python and Qt6.
 
