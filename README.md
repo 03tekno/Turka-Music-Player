@@ -22,8 +22,8 @@ Modern and Adaptive Interface: Toggle between Dark and Light modes with a single
 
 Smart Playlist Management: Manage your music library effortlessly with drag-and-drop support, an advanced search bar, and an auto-save feature. Even if you close the app, your playlist and preferences will be waiting for you when you return.
 
-# Why Turka Music Player?
+Why Turka Music Player?
 
 Turka is not just a player; it’s a stylish accessory for your desktop. With smooth scrolling song titles, fluid animations, and user-friendly navigation buttons, the control of your music is entirely in your hands.
 
-# "Don’t just listen to the music—watch its rhythm with Turka."
+"Don’t just listen to the music—watch its rhythm with Turka."
