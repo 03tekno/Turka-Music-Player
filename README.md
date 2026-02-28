@@ -4,6 +4,9 @@ A simple and lightweight music player application built with Python and Qt6.
 
 Download link for the .deb file (Debian-based systems): https://github.com/03tekno/Turka-Music-Player/releases/tag/current
 
+![screenshot](turkamp1.png "screenshot")
+![screenshot](turkamp2.png "screenshot")
+
 Turka Music Player: Feel the Music, Start the Visual Feast! 🎶
 
 Tired of ordinary music players? Turka Music Player is a next-generation media player that combines minimalist design with professional audio visualization (VU Meter) technology, appealing to both your eyes and ears. Developed with the power of Python and PyQt6, this application transforms your music listening experience into desktop art.
