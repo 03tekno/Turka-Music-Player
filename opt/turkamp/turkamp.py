@@ -2,10 +2,11 @@ import sys
 import os
 import random
 import json
+import math
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QPushButton, QLabel, QFrame, QFileDialog, 
                              QListWidget, QSlider, QListWidgetItem, QMenu, QLineEdit)
-from PyQt6.QtCore import Qt, QRect, QPointF, QTimer, QUrl, pyqtSignal
+from PyQt6.QtCore import Qt, QRect, QPointF, QTimer, QUrl, pyqtSignal, QRectF
 from PyQt6.QtGui import QAction, QPainter, QColor, QLinearGradient, QPen, QFont, QFontMetrics, QIcon, QGuiApplication, QPolygonF
 from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 
@@ -40,6 +41,7 @@ class DragDropList(QListWidget):
     def show_context_menu(self, position):
         menu = QMenu(self)
         menu.setStyleSheet("QMenu { background-color: #2c3e50; color: white; border: 1px solid #7f8c8d; } QMenu::item:selected { background-color: #34495e; }")
+        # English translation for context menu
         remove_action = QAction("Remove Track", self)
         remove_action.triggered.connect(lambda: self.deleteRequested.emit())
         clear_action = QAction("Clear All", self)
@@ -56,7 +58,7 @@ class ScrollingLabel(QWidget):
         self.setText(text)
 
     def setText(self, text):
-        self.full_text = str(text); metrics = QFontMetrics(QFont("DejaVu Sans", 11))
+        self.full_text = str(text); metrics = QFontMetrics(QFont("DejaVu Sans", 11, QFont.Weight.Bold))
         self.text_width = metrics.horizontalAdvance(self.full_text); self.space_gap = 150; self.offset = 0; self.update()
 
     def update_offset(self):
@@ -68,7 +70,7 @@ class ScrollingLabel(QWidget):
     def paintEvent(self, event):
         if not self.full_text: return
         painter = QPainter(self); painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.setPen(QColor("#FFFFFF")); painter.setFont(QFont("DejaVu Sans", 11))
+        painter.setPen(QColor("#FFFFFF")); painter.setFont(QFont("DejaVu Sans", 11, QFont.Weight.Bold))
         metrics = painter.fontMetrics(); y_pos = (self.height() + metrics.ascent() - metrics.descent()) // 2
         painter.drawText(self.offset, y_pos, self.full_text)
         painter.drawText(self.offset + self.text_width + self.space_gap, y_pos, self.full_text)
@@ -77,34 +79,34 @@ class ProVolumeKnob(QWidget):
     valueChanged = pyqtSignal(int)
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedSize(110, 110); self.value = 75; self.color = QColor("#00e676"); self.is_dark = True
-
+        self.setFixedSize(120, 120); self.value = 75; self.color = QColor("#00e676"); self.is_dark = True; self.setCursor(Qt.CursorShape.PointingHandCursor)
     def setValue(self, val): self.value = max(0, min(100, val)); self.update()
-
     def mouseMoveEvent(self, event):
-        pos = event.position(); delta = pos.y() - self.height()/2
-        val = max(0, min(100, 100 - int((delta + 30) * 1.6)))
-        self.value = val; self.valueChanged.emit(self.value); self.update()
-
+        center = QPointF(self.width() / 2, self.height() / 2); pos = event.position()
+        angle = math.degrees(math.atan2(center.y() - pos.y(), pos.x() - center.x()))
+        adj = (angle + 225) % 360
+        if adj > 270: adj = 270
+        val = int((adj / 270) * 100)
+        if abs(val - self.value) < 35: self.value = val; self.valueChanged.emit(self.value); self.update()
     def paintEvent(self, event):
         painter = QPainter(self); painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        side = min(self.width(), self.height()) - 15
-        rect_f = QRect(0, 0, side, side); rect_f.moveCenter(self.rect().center())
-        shadow_rect = rect_f.adjusted(2, 2, 2, 2)
-        painter.setBrush(QColor(0,0,0,100)); painter.setPen(Qt.PenStyle.NoPen); painter.drawEllipse(shadow_rect)
-        grad = QLinearGradient(QPointF(rect_f.topLeft()), QPointF(rect_f.bottomRight()))
-        if self.is_dark:
-            grad.setColorAt(0, QColor("#3d3d3d")); grad.setColorAt(0.5, QColor("#2d3436")); grad.setColorAt(1, QColor("#1e1e1e"))
-            text_color = QColor("#FFFFFF")
-        else:
-            grad.setColorAt(0, QColor("#fdfdfd")); grad.setColorAt(0.5, QColor("#d1d8e0")); grad.setColorAt(1, QColor("#a5b1c2"))
-            text_color = QColor("#2d3436")
-        painter.setBrush(grad); painter.setPen(QPen(QColor("#000000") if self.is_dark else QColor("#778ca3"), 1.5)); painter.drawEllipse(rect_f)
-        pen = QPen(self.color, 4.0, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
-        painter.setPen(pen); angle = int(self.value * 3.6 * 16)
-        painter.drawArc(rect_f.adjusted(6, 6, -6, -6), 90 * 16, -angle)
-        painter.setPen(text_color); painter.setFont(QFont("sans-serif", 9, QFont.Weight.Bold))
-        painter.drawText(rect_f, Qt.AlignmentFlag.AlignCenter, f"%{self.value}")
+        center = QPointF(self.rect().center()); radius = 36; pen = QPen(); pen.setCapStyle(Qt.PenCapStyle.RoundCap); pen.setWidth(3)
+        for i in range(21):
+            angle = 135 + (i * 13.5)
+            pen.setColor(self.color if i * 5 <= self.value else QColor(100, 100, 100, 100))
+            painter.setPen(pen); rad = math.radians(angle)
+            p1 = QPointF(center.x() + (radius + 10) * math.cos(rad), center.y() + (radius + 10) * math.sin(rad))
+            p2 = QPointF(center.x() + (radius + 18) * math.cos(rad), center.y() + (radius + 18) * math.sin(rad))
+            painter.drawLine(p1, p2)
+        rect_f = QRectF(0, 0, radius*2, radius*2); rect_f.moveCenter(center)
+        painter.setBrush(QColor(0,0,0,100)); painter.setPen(Qt.PenStyle.NoPen); painter.drawEllipse(rect_f.translated(2, 4))
+        grad = QLinearGradient(rect_f.topLeft(), rect_f.bottomRight())
+        if self.is_dark: grad.setColorAt(0, QColor("#454545")); grad.setColorAt(1, QColor("#1a1a1a")); text_color = QColor("#FFFFFF")
+        else: grad.setColorAt(0, QColor("#ffffff")); grad.setColorAt(1, QColor("#d1d9e6")); text_color = QColor("#2d3436")
+        painter.setBrush(grad); painter.setPen(QPen(QColor(0,0,0,180) if self.is_dark else QColor(180,180,180), 1)); painter.drawEllipse(rect_f)
+        painter.setBrush(self.color); v_ang = math.radians(135 + (self.value * 2.7)); ind_r = radius - 10
+        painter.drawEllipse(QPointF(center.x() + ind_r * math.cos(v_ang), center.y() + ind_r * math.sin(v_ang)), 3, 3)
+        painter.setPen(text_color); painter.setFont(QFont("sans-serif", 10, QFont.Weight.Bold)); painter.drawText(rect_f, Qt.AlignmentFlag.AlignCenter, f"{self.value}")
 
 class ModernSpectrum(QWidget):
     modeChanged = pyqtSignal(int)
@@ -118,6 +120,7 @@ class ModernSpectrum(QWidget):
         self.heights = [0.0] * self.bars
         self.target_heights = [0.0] * self.bars
         self.timer = QTimer(); self.timer.timeout.connect(self.animate); self.timer.start(30)
+        # English translation for tooltip
         self.setToolTip("Click to change visualizer mode!")
 
     def mousePressEvent(self, event):
@@ -135,6 +138,11 @@ class ModernSpectrum(QWidget):
     def paintEvent(self, event):
         painter = QPainter(self); painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.fillRect(self.rect(), QColor("#000000"))
+        
+        painter.setPen(QColor(30, 30, 30))
+        for x in range(0, self.width(), 20): painter.drawLine(x, 0, x, self.height())
+        for y in range(0, self.height(), 20): painter.drawLine(0, y, self.width(), y)
+
         w = self.width() / self.bars
         mid_y = self.height() / 2
         for i in range(self.bars):
@@ -166,6 +174,10 @@ class ModernSpectrum(QWidget):
                 poly = QPolygonF([QPointF(i * w, self.height()), QPointF(i * w, self.height() - h), 
                                  QPointF((i+1) * w, self.height() - self.heights[min(i+1, self.bars-1)]), QPointF((i+1) * w, self.height())])
                 painter.drawPolygon(poly)
+        
+        painter.setPen(QColor(255, 255, 255, 15))
+        for i in range(0, self.height(), 3):
+            painter.drawLine(0, i, self.width(), i)
 
 class TurkaPlayer(QMainWindow):
     def __init__(self):
@@ -201,6 +213,7 @@ class TurkaPlayer(QMainWindow):
         self.left_panel = QWidget(); self.layout_left = QVBoxLayout(self.left_panel); self.layout_left.setContentsMargins(0, 0, 0, 0); self.layout_left.setSpacing(10); self.left_panel.setFixedWidth(400)
         self.lcd_container = QFrame(); self.lcd_container.setObjectName("LCDContainer"); self.lcd_container.setFixedHeight(180) 
         lcd_lyt = QVBoxLayout(self.lcd_container); lcd_lyt.setContentsMargins(12, 10, 12, 10)
+        # English translation for title
         self.title_lbl = ScrollingLabel("Turka Music Player - Ready"); lcd_lyt.addWidget(self.title_lbl)
         self.vumeter = ModernSpectrum(self.player); lcd_lyt.addWidget(self.vumeter)
         self.layout_left.addWidget(self.lcd_container)
@@ -210,6 +223,7 @@ class TurkaPlayer(QMainWindow):
         self.progress_bar = QSlider(Qt.Orientation.Horizontal); prog_lyt.addWidget(self.time_lbl); prog_lyt.addWidget(self.progress_bar); self.layout_left.addWidget(self.progress_container)
 
         self.top_btn_container = QWidget(); top_btn_layout = QHBoxLayout(self.top_btn_container); top_btn_layout.setContentsMargins(0, 0, 0, 0); top_btn_layout.setSpacing(8) 
+        # English translation for buttons
         self.btn_add = self.create_rect_btn("Add +", 65, 30); self.btn_list_toggle = self.create_rect_btn("List ≣", 65, 30)
         self.btn_shuffle = self.create_rect_btn("Shuffle", 65, 30); self.btn_repeat = self.create_rect_btn("Repeat", 65, 30)
         self.btn_theme = self.create_rect_btn("Theme", 60, 30); self.btn_mode = self.create_rect_btn("☾", 35, 30) 
@@ -228,6 +242,7 @@ class TurkaPlayer(QMainWindow):
         self.layout_left.addWidget(self.nav_container); self.layout_horizontal.addWidget(self.left_panel)
 
         self.right_panel = QWidget(); self.layout_right = QVBoxLayout(self.right_panel); self.layout_right.setContentsMargins(0, 0, 0, 0); self.layout_right.setSpacing(10)
+        # English translation for placeholder
         self.search_bar = QLineEdit(); self.search_bar.setPlaceholderText("Search tracks..."); self.search_bar.setFixedHeight(35)
         self.list = DragDropList(); self.layout_right.addWidget(self.search_bar); self.layout_right.addWidget(self.list); self.layout_horizontal.addWidget(self.right_panel)
 
@@ -297,6 +312,7 @@ class TurkaPlayer(QMainWindow):
     def clear_playlist(self): self.list.clear(); self.save_settings()
 
     def manual_add(self):
+      # English translation for dialog
       files, _ = QFileDialog.getOpenFileNames(self, "Select Music", "", "Audio Files (*.mp3 *.wav *.flac *.m4a *.mpga *.aac *.ogg *.opus *.wma *.m4b *.aiff *.mid *.amr)")
       if files: 
             for f in files: self.add_to_list(f)
@@ -352,8 +368,23 @@ class TurkaPlayer(QMainWindow):
         self.list.setCurrentRow(idx); self.play_file(self.list.currentItem())
 
     def update_pos(self, p):
-        self.progress_bar.setValue(p); m, s = divmod(p // 1000, 60); td = self.player.duration(); dm, ds = divmod(td // 1000, 60)
-        self.time_lbl.setText(f"{m:02}:{s:02} / {dm:02}:{ds:02}")
+        self.progress_bar.setValue(p)
+        m, s = divmod(p // 1000, 60)
+        td = self.player.duration()
+        dm, ds = divmod(td // 1000, 60)
+        
+        path = self.player.source().toLocalFile()
+        meta_info = ""
+        if path and os.path.exists(path):
+            ext = os.path.splitext(path)[1].upper()[1:]
+            size = os.path.getsize(path) / (1024 * 1024)
+            if td > 0:
+                br = int((os.path.getsize(path) * 8) / (td / 1000) / 1000)
+                meta_info = f"[{ext} | {size:.1f}MB | {br}kbps]"
+            else:
+                meta_info = f"[{ext} | {size:.1f}MB]"
+
+        self.time_lbl.setText(f"{meta_info}  {m:02}:{s:02} / {dm:02}:{ds:02}")
 
     def update_dur(self, d): self.progress_bar.setRange(0, d)
     
