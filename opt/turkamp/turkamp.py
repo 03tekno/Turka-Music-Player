@@ -11,7 +11,7 @@ from PyQt6.QtGui import QAction, QPainter, QColor, QLinearGradient, QPen, QFont,
 from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 
 CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".turkamp_config.json")
-SUPPORTED_FORMATS = ('.mp3', '.wav', '.flac', '.m4a', '.mpga', '.aac', '.ogg', '.opus', '.wma', '.m4b', '.aiff', '.mid', '.amr')
+SUPPORTED_FORMATS = ('.mp3', '.wav', '.flac', '.m4a', '.mpga', '.aac', '.ogg', '.opus', '.wma', '.m4b', '.aiff', '.mid', '.amr', '.au', '.snd', '.ac3', '.voc', '.mka')
 ICON_NAME = "turkamp.png" 
 
 class DragDropList(QListWidget):
@@ -313,7 +313,7 @@ class TurkaPlayer(QMainWindow):
 
     def manual_add(self):
       # English translation for dialog
-      files, _ = QFileDialog.getOpenFileNames(self, "Select Music", "", "Audio Files (*.mp3 *.wav *.flac *.m4a *.mpga *.aac *.ogg *.opus *.wma *.m4b *.aiff *.mid *.amr)")
+      files, _ = QFileDialog.getOpenFileNames(self, "Select Music", "", "Audio Files (*.mp3 *.wav *.flac *.m4a *.mpga *.aac *.ogg *.opus *.wma *.m4b *.aiff *.mid *.amr *.au *.snd *.ac3 *.voc *.mka)")
       if files: 
             for f in files: self.add_to_list(f)
             self.save_settings()
