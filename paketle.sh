@@ -35,7 +35,6 @@ EOF
 # Başlatıcı script (/usr/bin/turkamp)
 cat <<EOF > "$BUILD_DIR/usr/bin/turkamp"
 #!/bin/bash
-# Uygulama /opt altında çalışacak
 cd /opt/turkamp
 python3 turkamp.py
 EOF
@@ -44,14 +43,13 @@ chmod +x "$BUILD_DIR/usr/bin/turkamp"
 # Desktop dosyası
 cat <<EOF > "$BUILD_DIR/usr/share/applications/turkamp.desktop"
 [Desktop Entry]
-Name=Turka Music Player
+Name=TurkaMP
 Exec=/usr/bin/turkamp
 Icon=turkamp
 Type=Application
 Categories=Audio;Music;Player;
 EOF
 
-# Paketle (Root sahipliği ile)
 dpkg-deb --root-owner-group --build "$BUILD_DIR"
 
 echo "İşlem tamamlandı! $BUILD_DIR.deb dosyası oluşturuldu."
